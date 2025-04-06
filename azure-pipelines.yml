@@ -54,8 +54,7 @@ stages:
         Write-Host "Listing files in: $artifactPath"
         Get-ChildItem -Path $artifactPath -Recurse
 
-        # Update these if the .dll is deeper (after testing this)
-        $source = "$artifactPath"
+        $source = "$(System.ArtifactsDirectory)\drop\MvcMovie\bin\Release\net6.0\publish"
         $destination = "C:\inetpub\wwwroot\MVCMovie"
 
         Write-Host "Copying from $source to $destination..."
