@@ -4,32 +4,62 @@
 # https://aka.ms/yaml
 
 trigger:
-- main
+- master
 
 pool:
-  name: Default  # Or your custom agent pool name
+  name: Default  # This uses your self-hosted agent
 
 variables:
   buildConfiguration: 'Release'
 
-steps:
-- task: UseDotNet@2
-  inputs:
-    packageType: 'sdk'
-    version: '6.0.x'  # Or your version
+stages:
+- stage: Build
+  displayName: 'Build and Publish'
+  jobs:
+  - job: BuildJob
+    displayName: 'Build MVCMovie App'
+    steps:
+    - task: UseDotNet@2
+      inputs:
+        packageType: 'sdk'
+        version: '6.0.x'  # Match your .NET SDK version
 
-- script: dotnet build --configuration $(buildConfiguration)
-  displayName: 'Build MVCMovie App'
+    - script: dotnet build --configuration $(buildConfiguration)
+      displayName: 'Build App'
 
-- task: DotNetCoreCLI@2
-  inputs:
-    command: 'publish'
-    publishWebProjects: true
-    arguments: '--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)'
-    zipAfterPublish: true
+    - task: DotNetCoreCLI@2
+      displayName: 'Publish App'
+      inputs:
+        command: publish
+        publishWebProjects: true
+        arguments: '--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)'
+        zipAfterPublish: false
 
-- task: PublishBuildArtifacts@1
-  inputs:
-    PathtoPublish: '$(Build.ArtifactStagingDirectory)'
-    ArtifactName: 'drop'
-    publishLocation: 'Container'
+    - task: PublishBuildArtifacts@1
+      inputs:
+        PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+        ArtifactName: 'drop'
+        publishLocation: 'Container'
+
+- stage: Deploy
+  displayName: 'Deploy Locally'
+  dependsOn: Build
+  condition: succeeded()
+  jobs:
+  - job: DeployJob
+    displayName: 'Copy Files to Local Server'
+    steps:
+    - task: DownloadBuildArtifacts@0
+      inputs:
+        artifactName: 'drop'
+        downloadPath: '$(System.ArtifactsDirectory)'
+
+    - powershell: |
+        $source = "$(System.ArtifactsDirectory)\drop"
+        $destination = "C:\inetpub\wwwroot\MVCMovie"  # Change if deploying somewhere else
+        Write-Host "Deploying from $source to $destination"
+        if (!(Test-Path $destination)) {
+          New-Item -ItemType Directory -Path $destination
+        }
+        Copy-Item -Path "$source\*" -Destination $destination -Recurse -Force
+      displayName: 'Deploy to Local IIS Folder'
