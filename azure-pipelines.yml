@@ -53,10 +53,10 @@ stages:
         $artifactRoot = "$(System.ArtifactsDirectory)\drop"
         Write-Host "Listing everything in $artifactRoot"
         Get-ChildItem -Path $artifactRoot -Recurse
-      displayName: '🗂 TEMP: List artifact file structure'
+      displayName: 'TEMP: List artifact file structure'
 
     - powershell: |
-        $source = "$(System.ArtifactsDirectory)\drop\MvcMovie\MvcMovie\bin\Release\net6.0\publish"
+        $source = "$(System.ArtifactsDirectory)\drop\MvcMovie"
         $destination = "C:\inetpub\wwwroot\MVCMovie"
 
         Write-Host "Deploying from $source to $destination"
