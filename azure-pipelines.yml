@@ -50,6 +50,12 @@ stages:
         downloadPath: '$(System.ArtifactsDirectory)'
 
     - powershell: |
+        $artifactRoot = "$(System.ArtifactsDirectory)\drop"
+        Write-Host "Listing everything in $artifactRoot"
+        Get-ChildItem -Path $artifactRoot -Recurse
+      displayName: '🗂 TEMP: List artifact file structure'
+
+    - powershell: |
         $source = "$(System.ArtifactsDirectory)\drop\MvcMovie\MvcMovie\bin\Release\net6.0\publish"
         $destination = "C:\inetpub\wwwroot\MVCMovie"
 
@@ -59,5 +65,4 @@ stages:
         }
 
         Copy-Item -Path "$source\*" -Destination $destination -Recurse -Force
-      displayName: '📤 Deploy to Local IIS Folder'
-
+      displayName: 'Deploy to Local IIS Folder'
